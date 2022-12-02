@@ -1,14 +1,15 @@
 package code;
 
+import java.util.ArrayList;
 
-public class StateNode {
+public class StateNode{
 	Cell[][] grid;
 	Agent agent;
 	StateNode parent;
 	String operator;
 	int depth;
 	int path_cost;
-	String plan;
+	float score;
 
 	public StateNode(Cell[][] grid,Agent agent, StateNode parent, String operator, int depth, int path_cost) {
 		this.grid = grid;
@@ -17,18 +18,63 @@ public class StateNode {
 		this.operator = operator;
 		this.depth = depth;
 		this.path_cost = path_cost;
-		plan="";
 	}
 
 	public boolean isGoal() {
     	// case 1
     	if(endGame()) {
-    		plan = printPath("");
+    		printPath("");
     		System.out.println(agent.getBlackBoxes());
     	}
     	
     	return endGame();
     }
+	public float calcMaxScore(ArrayList<int []> ships_position, ArrayList<int []> stations_position, String method) {
+		float maxScore = 0; 
+		for (int i = 0; i < ships_position.size(); i++) {
+			float score = formula(ships_position.get(i)[0], ships_position.get(i)[1], method);
+			if(score>maxScore)
+				maxScore=score;
+		}
+		for (int i = 0; i < stations_position.size(); i++) {
+			float score = formula(stations_position.get(i)[0], stations_position.get(i)[1], method);
+			if(score>maxScore)
+				maxScore=score;
+		}
+		return maxScore;
+	}
+	public float formula(int i, int j, String method) {
+		if (agent.getI()==1 && agent.getJ()==1 && operator=="retrieve")
+			System.out.println("7oooda"+operator);
+		
+		double distance=0;
+		if(method.equals("Man")) {
+			distance = Math.abs(i-agent.getI()) + Math.abs(j-agent.getJ());
+		}
+		if(method.equals("Euc")) {
+			distance = Math.sqrt(Math.pow(i-agent.getI(),2) + Math.pow(j-agent.getJ(),2));
+		}
+		int nominator=0;
+		if(grid[i][j] instanceof Ship) {
+			Ship ship = ((Ship)grid[i][j]);
+			if (agent.getRemainingCapacity()>0) {
+				nominator = 10000*ship.getNoOfPassengers()+100*(20-ship.getBlackBoxDamage())+ 10000*agent.getSavedPassengers()+ 10000*agent.getBlackBoxes();
+			}
+		}
+		if(grid[i][j] instanceof Station) {
+			nominator = agent.getBlackBoxes()+agent.getPassengersOnBoard();
+			if (agent.getRemainingCapacity()==0) {
+				nominator +=1000000;
+			}
+			
+			if (agent.getI()==i && agent.getJ()==j) {
+				nominator +=100000000;
+			}
+		}
+		
+		distance++;
+		return (float)(nominator/distance);
+	}
 	
 	public String printPath(String result) {
 		if(this.parent!=null) {
@@ -41,10 +87,6 @@ public class StateNode {
 		}
 		return result;
 	}
-	public String plan() {
-		return plan;
-	}
-
 	public boolean endGame() {
 		for (int i = 0; i < grid.length; i++) {
 			for (int j = 0; j < grid[i].length; j++) {

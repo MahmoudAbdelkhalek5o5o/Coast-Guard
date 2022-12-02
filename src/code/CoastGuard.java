@@ -21,6 +21,7 @@ public class CoastGuard extends SearchProblem{
     static int width;
     static int height;
     static ArrayList<int[]>ships_positions;
+    static ArrayList<int[]>stations_positions;
     public CoastGuard(Object [] info){
     	Cell [][]initialGrid = ((Cell [][])(info[0]));
     	Agent agent = ((Agent)(info[1]));
@@ -220,12 +221,14 @@ public class CoastGuard extends SearchProblem{
 
 
         // creating and localizing Stations
-        String [] stations_position = grid_split[3].split(",");
+        String [] stations_position_string = grid_split[3].split(",");
         //XXX changed the condition by -1
-        for(int i =0;i<stations_position.length-1;i=i+2){
-        	System.out.println(stations_position[i+1]);
-            grid[Integer.parseInt(stations_position[i])][Integer.parseInt(stations_position[i+1])] =
-                    new Station(Integer.parseInt(stations_position[i]), Integer.parseInt(stations_position[i+1]));
+        stations_positions = new ArrayList<int[]>();
+        for(int i =0;i<stations_position_string.length-1;i=i+2){
+        	System.out.println(stations_position_string[i+1]);
+            grid[Integer.parseInt(stations_position_string[i])][Integer.parseInt(stations_position_string[i+1])] =
+                    new Station(Integer.parseInt(stations_position_string[i]), Integer.parseInt(stations_position_string[i+1]));
+            stations_positions.add(new int[] {Integer.parseInt(stations_position_string[i]), Integer.parseInt(stations_position_string[i+1])});
         }
         // creating and localizing ships
         String [] ships_position_string = grid_split[4].split(",");
@@ -236,6 +239,7 @@ public class CoastGuard extends SearchProblem{
                     new Ship(Integer.parseInt(ships_position_string[i]), Integer.parseInt(ships_position_string[i+1]), Integer.parseInt(ships_position_string[i+2]));
             ships_positions.add(new int[] {Integer.parseInt(ships_position_string[i]), Integer.parseInt(ships_position_string[i+1])});
         }
+        
         // Initializing Empty cells
         for(int i=0;i<grid.length;i++){
             for(int j=0;j<grid[i].length;j++){
@@ -340,16 +344,20 @@ public class CoastGuard extends SearchProblem{
         CoastGuard problem = new CoastGuard(instantiateGrid(grid_string));
 		String result = "";
         switch(strategy){
-            case "BF": result = problem.solveBFS();
+            case "BF": result = problem.solveDFS();
                 break;
             case "DF": result = problem.solveDFS();
                 break;
-            case "ID":// implement depth-first search
+            case "ID": result = problem.solveDFS();
                 break;
-            case "GR":// implement depth-first search
+            case "GR1": result = problem.solveGR1();
                 break;
-            case "AS":// implement depth-first search
+            case "GR2": result = problem.solveGR2();
+            break;
+            case "AS1": result = problem.solveDFS();
                 break;
+            case "AS2": result = problem.solveDFS();
+            break;
         }
         return result.substring(1,result.length())+";"+ countRetrieve(result) +";"+problem.expandedNodes;
     }
@@ -413,6 +421,69 @@ public class CoastGuard extends SearchProblem{
 		}
 		return result;
 	}
+	public String solveGR1() {
+		String result = "";
+		PriorityQueue<StateNode> priorityQueue = new
+	             PriorityQueue<StateNode>(new StateNodeComparator(ships_positions, stations_positions,"Man"));
+		priorityQueue.add(initial_state);
+    	while(!priorityQueue.isEmpty()) {
+    		
+    		StateNode peek = priorityQueue.remove();
+    		visualizeGrid(peek);
+			System.out.println("search queue size: "+priorityQueue.size());
+    		if(peek.isGoal()) {
+				result = peek.printPath("");
+				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
+				result = result + ";" + deaths;
+				// System.out.println(peek.plan());
+    			break;
+    		}
+    		else {
+    			ArrayList<StateNode> nextNodes = getNextStates(peek);
+    			for (int i = 0; i < nextNodes.size(); i++) {
+    				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
+    					priorityQueue.add(nextNodes.get(i));
+    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScore(ships_positions, stations_positions, "Man") + " " + nextNodes.get(i).operator);
+    					expandedNodes++;
+    				}
+//    				searchQueue.add(nextNodes.get(i));
+				}
+    		}
+    	}
+		return result;
+    }
+	
+	public String solveGR2() {
+		String result = "";
+		PriorityQueue<StateNode> priorityQueue = new
+	             PriorityQueue<StateNode>(new StateNodeComparator(ships_positions, stations_positions,"Euc"));
+		priorityQueue.add(initial_state);
+    	while(!priorityQueue.isEmpty()) {
+    		
+    		StateNode peek = priorityQueue.remove();
+    		visualizeGrid(peek);
+			System.out.println("search queue size: "+priorityQueue.size());
+    		if(peek.isGoal()) {
+				result = peek.printPath("");
+				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
+				result = result + ";" + deaths;
+				// System.out.println(peek.plan());
+    			break;
+    		}
+    		else {
+    			ArrayList<StateNode> nextNodes = getNextStates(peek);
+    			for (int i = 0; i < nextNodes.size(); i++) {
+    				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
+    					priorityQueue.add(nextNodes.get(i));
+    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScore(ships_positions, stations_positions,"Euc") + " " + nextNodes.get(i).operator);
+    					expandedNodes++;
+    				}
+//    				searchQueue.add(nextNodes.get(i));
+				}
+    		}
+    	}
+		return result;
+    }
     
     public static boolean repeatedAncestorsAgentPositions(StateNode node, int i, int j) {
     	if (node.parent == null) {
@@ -542,9 +613,9 @@ public class CoastGuard extends SearchProblem{
     public static void main(String[] args) {
     	///Cell[][] grid,Agent agent, StateNode parent, String operator, int depth, int path_cost
 //    	CoastGuard problem = new CoastGuard(instantiateGrid(genGrid()));
-    	String grid_str = "1,2;50;1,0;1,0;0,0,60;";
-//		String grid_str = genGrid();
-    	System.out.println(solve(grid_str,"DF",false));
+    	String grid_str = "5,6;50;0,1;0,4,3,3;1,1,90;";
+//		grid_str = genGrid();
+    	System.out.println(solve(grid_str,"GR2",false));
 		System.out.println(grid_str);
     	
 //    	GenerateRandomNumber(40,1);
