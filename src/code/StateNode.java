@@ -8,6 +8,7 @@ public class StateNode {
 	String operator;
 	int depth;
 	int path_cost;
+	String plan;
 
 	public StateNode(Cell[][] grid,Agent agent, StateNode parent, String operator, int depth, int path_cost) {
 		this.grid = grid;
@@ -16,12 +17,13 @@ public class StateNode {
 		this.operator = operator;
 		this.depth = depth;
 		this.path_cost = path_cost;
+		plan="";
 	}
 
 	public boolean isGoal() {
     	// case 1
     	if(endGame()) {
-    		String result = printPath("");
+    		plan = printPath("");
     		System.out.println(agent.getBlackBoxes());
     	}
     	
@@ -30,14 +32,17 @@ public class StateNode {
 	
 	public String printPath(String result) {
 		if(this.parent!=null) {
-			result = "," + operator + parent.printPath(result);
-			System.out.print("," + operator);
+			result = parent.printPath(result) + "," + operator;
+			// System.out.print("," + operator);
 		}
 		else {
 			System.out.println("-----------------------------------------");
 			visualizeGrid();
 		}
 		return result;
+	}
+	public String plan() {
+		return plan;
 	}
 
 	public boolean endGame() {
