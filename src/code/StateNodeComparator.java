@@ -17,12 +17,12 @@ public class StateNodeComparator implements Comparator<StateNode>{
 		}
 		@Override
 		public int compare(StateNode o1, StateNode o2) {
-			// TODO Auto-generated method stub
-			float score1 = o1.calcMaxScore(ships_positions, stations_positions, method);
-			float score2 = o2.calcMaxScore(ships_positions, stations_positions, method);
-			  if (score1 < score2)
+			
+			float score1 = o1.calcMaxScore2(ships_positions, stations_positions, method);
+			float score2 = o2.calcMaxScore2(ships_positions, stations_positions, method);
+			  if (score1 > score2)
 	                return 1;
-	            else if (score1 > score2)
+	            else if (score1 < score2)
 	                return -1;
 	                return 0;
 		}

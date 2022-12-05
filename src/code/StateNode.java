@@ -43,6 +43,232 @@ public class StateNode{
 		}
 		return maxScore;
 	}
+	//this heuristic assumes we have infinte capacity, but we can carry the passengers of only one ship at a time.
+	//it tries to estimate the number of steps needed to achieve the goal by counting the steps from the agent 
+	// 	position till the end goal going through all the hubs in between
+	//if we had 2 ships the heuristic calculates the distance to the nearest ship for pickup + the sitance to the nearest
+	// 	station to drop + the distance to the nearest ship to pickup + the distance to the nearest station to drop
+	// 	+ the distance to the nearest blackboxes to retrieve + finally the distance to the nearest station to drop + 1
+	//possible states:
+		// looking for ship with passengers
+		// looking to drop off passengers
+		// looking for a ship with blackboxes
+		// looking to drop off blackboxes
+	public float calcMaxScore2(ArrayList<int []> ships_position, ArrayList<int []> stations_position, String method) {
+		float maxScore = 0; 
+		int[] ship_pos=  nearestShipWithPassengers(ships_position);
+		String look_for= "";
+		if(ship_pos != null) {
+			if(agent.getRemainingCapacity()== agent.getMaxCapacity()) {
+				// state 1
+				look_for= "pick";
+			}
+			else {
+				// state 2
+				look_for= "drop";
+
+			}
+		}
+		else {
+			int[] BB_pos = nearestShipWithBBs(ships_position);
+			if(BB_pos != null) {
+				// state 3
+				look_for= "retrieve";
+
+			}
+			else {
+				// state 4
+				look_for= "drop";
+			}
+		}
+		maxScore = planScore(look_for, ships_position, stations_position);
+		
+		return maxScore;
+	}
+	private float planScore(String look_for, ArrayList<int[]> ships_position, ArrayList<int[]> stations_position) {
+		int plan_score= 1;
+		ArrayList<Integer> ships_state = getShipsState(ships_position);
+		if(allShipsEmpty(ships_state) ) {
+			int[] nearest_station = nearestStation(stations_position);
+			if(nearest_station[0]== agent.getI() && nearest_station[1] == agent.getJ() && agent.getBlackBoxes()==0) {
+				return 0;
+			}
+		}
+		int[] curr_pos = new int[] {agent.getI(),agent.getJ()};
+		while(true) {
+			if(look_for.equals("pick")) {
+				int[] ship_pos = nearestShipWithPassengers(ships_position, ships_state);
+				if(ship_pos == null) {
+					look_for = "retrieve";
+					continue;
+				}
+				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], ship_pos[0], ship_pos[1], "man");
+				curr_pos = ship_pos;
+				look_for = "drop";
+			}
+			else if(look_for.equals("retrieve")) {
+				int[] ship_pos = nearestShipWithBBs(ships_position, ships_state);
+				if(ship_pos == null) {
+					look_for = "drop";
+					continue;
+				}
+				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], ship_pos[0], ship_pos[1], "man");
+				curr_pos = ship_pos;
+				look_for = "drop";
+			}
+			else if(look_for.equals("drop")) {
+				if(allShipsEmpty(ships_state)) {
+					break;
+				}
+				int[] station_pos = nearestStation(stations_position);
+				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], station_pos[0], station_pos[1], "man");
+				curr_pos = station_pos;
+				look_for = "pick";
+			}
+			
+		}
+		return plan_score;
+	}
+
+	private boolean allShipsEmpty(ArrayList<Integer> ships_state) {
+		for (int i = 0; i < ships_state.size(); i++) {
+			if(ships_state.get(i) >0)
+				return false;
+		}
+		return true;
+	}
+
+	private int[] nearestStation(ArrayList<int[]> stations_position) {
+		int[] res = null;
+		double smallest_distance = 1000;// the grid maximum distance can't be more than 30 
+		for(int i=0;i<stations_position.size();i++) {
+			
+			
+			double distance = calcDistanceBetween(agent.getI(),agent.getJ(),stations_position.get(i)[0], stations_position.get(i)[1], "man");
+			if(distance<=smallest_distance) {
+				smallest_distance = distance;
+				res = stations_position.get(i);
+			}
+			
+			
+		}
+		return res;
+	}
+
+	private int[] nearestShipWithBBs(ArrayList<int[]> ships_position, ArrayList<Integer> ships_state) {
+		int[] res = null;
+		double smallest_distance = 1000;// the grid maximum distance can't be more than 30 
+		int nearest_ship_index = -1;
+		for(int i=0;i<ships_position.size();i++) {
+			if(ships_state.get(i)!=1) {
+				continue;
+			}
+			Ship ship = (Ship)grid[ships_position.get(i)[0]][ships_position.get(i)[1]];
+			if(ship.hasBlackBox()) {
+				double distance = calcDistanceBetween(agent.getI(),agent.getJ(),ships_position.get(i)[0], ships_position.get(i)[1], "man");
+				if(distance<=smallest_distance) {
+					smallest_distance = distance;
+					nearest_ship_index = i;
+					res = ships_position.get(i);
+				}
+			}
+			
+		}
+		if(nearest_ship_index !=-1) {
+			ships_state.remove(nearest_ship_index);
+			ships_state.add(nearest_ship_index, 0);
+		}
+		return res;
+	}
+
+	private int[] nearestShipWithPassengers(ArrayList<int[]> ships_position, ArrayList<Integer> ships_state) {
+		int[] res = null;
+		double smallest_distance = 1000;// the grid maximum distance can't be more than 30 
+		int nearest_ship_index = -1;
+		for(int i=0;i<ships_position.size();i++) {
+			if(ships_state.get(i)!=2) {
+				continue;
+			}
+			Ship ship = (Ship)grid[ships_position.get(i)[0]][ships_position.get(i)[1]];
+			if(ship.getNoOfPassengers()>0) {
+				double distance = calcDistanceBetween(agent.getI(),agent.getJ(),ships_position.get(i)[0], ships_position.get(i)[1], "man");
+				if(distance<=smallest_distance) {
+					smallest_distance = distance;
+					nearest_ship_index = i;
+					res = ships_position.get(i);
+				}
+			}
+			
+		}
+		if(nearest_ship_index !=-1) {
+			ships_state.remove(nearest_ship_index);
+			ships_state.add(nearest_ship_index, 1);
+		}
+		return res;
+	}
+
+	private ArrayList<Integer> getShipsState(ArrayList<int[]> ships_position) {
+		// TODO Auto-generated method stub
+		ArrayList<Integer> res= new ArrayList<Integer>(ships_position.size());
+		for(int i=0; i<ships_position.size();i++) {
+			Ship ship = (Ship)grid[ships_position.get(i)[0]][ships_position.get(i)[1]];
+			if(ship.getNoOfPassengers()>0) {
+				res.add(2);
+			}
+			else if(ship.hasBlackBox()) {
+				res.add(1);
+			}
+			else {
+				res.add(0);
+			}
+			
+		}
+		return res;
+	}
+
+	private double calcDistanceBetween(int fi,int fj,int ti, int tj, String method) {
+		if(method.equals("euc")) {
+			return Math.sqrt(Math.pow(ti-fi,2) + Math.pow(tj-fj,2));
+		}
+		else if(method.equals("man")){
+			return Math.abs(ti-fi) + Math.abs(tj-fj);
+		}
+		return -1;
+	}
+	private int[] nearestShipWithBBs(ArrayList<int[]> ships_position) {
+		int[] res = null;
+		double smallest_distance = 1000;// the grid maximum distance can't be more than 30 
+		for(int i=0;i<ships_position.size();i++) {
+			Ship ship = (Ship)grid[ships_position.get(i)[0]][ships_position.get(i)[1]];
+			if(ship.hasBlackBox()) {
+				double distance = calcDistanceBetween(agent.getI(),agent.getJ(),ships_position.get(i)[0], ships_position.get(i)[1], "man");
+				if(distance<=smallest_distance) {
+					smallest_distance = distance;
+					res = ships_position.get(i);
+				}
+			}
+			
+		}
+		return res;
+	}
+
+	private int[] nearestShipWithPassengers(ArrayList<int[]> ships_position) {
+		int[] res = null;
+		double smallest_distance = 1000;// the grid maximum distance can't be more than 30 
+		for(int i=0;i<ships_position.size();i++) {
+			Ship ship = (Ship)grid[ships_position.get(i)[0]][ships_position.get(i)[1]];
+			if(ship.getNoOfPassengers()>0) {
+				double distance = calcDistanceBetween(agent.getI(),agent.getJ(),ships_position.get(i)[0], ships_position.get(i)[1], "man");
+				if(distance<=smallest_distance) {
+					smallest_distance = distance;
+					res = ships_position.get(i);
+				}
+			}
+			
+		}
+		return res;
+	}
+
 	public float formula(int i, int j, String method) {
 		if (agent.getI()==1 && agent.getJ()==1 && operator=="retrieve")
 			System.out.println("7oooda"+operator);

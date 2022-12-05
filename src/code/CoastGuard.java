@@ -443,7 +443,7 @@ public class CoastGuard extends SearchProblem{
     			for (int i = 0; i < nextNodes.size(); i++) {
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
-    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScore(ships_positions, stations_positions, "Man") + " " + nextNodes.get(i).operator);
+    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScore2(ships_positions, stations_positions, "Man") + " " + nextNodes.get(i).operator);
     					expandedNodes++;
     				}
 //    				searchQueue.add(nextNodes.get(i));
@@ -615,7 +615,7 @@ public class CoastGuard extends SearchProblem{
 //    	CoastGuard problem = new CoastGuard(instantiateGrid(genGrid()));
     	String grid_str = "5,6;50;0,1;0,4,3,3;1,1,90;";
 //		grid_str = genGrid();
-    	System.out.println(solve(grid_str,"GR2",false));
+    	System.out.println(solve(grid_str,"GR1",false));
 		System.out.println(grid_str);
     	
 //    	GenerateRandomNumber(40,1);
