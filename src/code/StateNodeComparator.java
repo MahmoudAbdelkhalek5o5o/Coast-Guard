@@ -25,8 +25,8 @@ public class StateNodeComparator implements Comparator<StateNode>{
 			}
 			else if(method.equals("GR2")) {
 				// change to gr2
-				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
-				score2 = o2.calcMaxScoreGR1(ships_positions, stations_positions);
+				score1 = o1.calcMaxScoreGR2(ships_positions, stations_positions);
+				score2 = o2.calcMaxScoreGR2(ships_positions, stations_positions);
 			}
 			else if(method.equals("AS1")) {
 				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
@@ -35,9 +35,9 @@ public class StateNodeComparator implements Comparator<StateNode>{
 				score2 +=o2.getPath_cost();
 			}
 			else if(method.equals("AS2")){
-				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
+				score1 = o1.calcMaxScoreGR2(ships_positions, stations_positions);
 				score1 +=o1.getPath_cost();
-				score2 = o2.calcMaxScoreGR1(ships_positions, stations_positions);
+				score2 = o2.calcMaxScoreGR2(ships_positions, stations_positions);
 				score2 +=o2.getPath_cost();
 			}
 			

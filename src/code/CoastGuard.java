@@ -339,6 +339,12 @@ public class CoastGuard extends SearchProblem{
 		System.out.println("--------------------"+"depth:"+ state.depth+", cost:"+ state.path_cost+
 				",operator: " + state.operator + ",capacity:"+ agent.getRemainingCapacity()+ "--------------------");
 	}
+	public void printQueue() {
+    	System.out.println(searchQueue.size());
+    }
+	public void printStack() {
+		System.out.println(searchStack.size());
+	}
     public static String solve(String grid_string, String strategy, boolean visualize){
         //Cell [][] grid = instantiateGrid(grid_string);
         CoastGuard problem = new CoastGuard(instantiateGrid(grid_string));
@@ -348,7 +354,7 @@ public class CoastGuard extends SearchProblem{
                 break;
             case "DF": result = problem.solveDFS();
                 break;
-            case "ID": result = problem.solveDFS();
+            case "ID": result = problem.solveID();
                 break;
             case "GR1": result = problem.solveGR1();
                 break;
@@ -356,24 +362,19 @@ public class CoastGuard extends SearchProblem{
             break;
             case "AS1": result = problem.solveAS1();
                 break;
-            case "AS2": result = problem.solveDFS();
+            case "AS2": result = problem.solveAS2();
             break;
         }
         return result.substring(1,result.length())+";"+ countRetrieve(result) +";"+problem.expandedNodes;
     }
-    public void printQueue() {
-    	System.out.println(searchQueue.size());
-    }
-	public void printStack() {
-		System.out.println(searchStack.size());
-	}
+    
     public String solveBFS() {
 		String result = "";
     	while(!searchQueue.isEmpty()) {
 
     		StateNode peek = searchQueue.remove();
-    		visualizeGrid(peek);
-			System.out.println("search queue size: "+searchQueue.size());
+    		//visualizeGrid(peek);
+			//System.out.println("search queue size: "+searchQueue.size());
     		if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -420,6 +421,43 @@ public class CoastGuard extends SearchProblem{
 			}
 		}
 		return result;
+	}
+	
+	public String solveID(){
+		return solveIDHelper(0);
+	}
+	public String solveIDHelper(int iterative) {
+
+		String result = "";
+		if (searchStack.isEmpty())
+			searchStack.push(initial_state);
+		while(!searchStack.isEmpty()) {
+			//System.out.println("iterative: " + iterative);
+			StateNode peek = searchStack.pop();
+			//visualizeGrid(peek);
+			//System.out.println("searchStackSize: " + searchStack.size());
+			if(peek.isGoal()) {
+				result = peek.printPath("");
+				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
+				result = result + ";" + deaths;
+				return  result;
+			}
+			else {
+				if ( (iterative - peek.depth) >= 0){
+					ArrayList<StateNode> nextNodes = getNextStates(peek);
+					for (int i = 0; i < nextNodes.size(); i++) {
+						if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
+							searchStack.push(nextNodes.get(i));
+							expandedNodes++;
+						}
+					}
+				}
+
+			}
+		}
+
+		isVisitedDict.clear();
+		return solveIDHelper(++ iterative);
 	}
 	public String solveGR1() {
 		String result = "";
@@ -474,6 +512,8 @@ public class CoastGuard extends SearchProblem{
     		else {
     			ArrayList<StateNode> nextNodes = getNextStates(peek);
     			for (int i = 0; i < nextNodes.size(); i++) {
+    				if(nextNodes.get(i).getOperator().equals("retrieve")  && !nextNodes.get(i).shipsWrecked(ships_positions))
+    					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
 //    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScore(ships_positions, stations_positions,"Euc") + " " + nextNodes.get(i).operator);
@@ -489,6 +529,39 @@ public class CoastGuard extends SearchProblem{
 		String result = "";
 		PriorityQueue<StateNode> priorityQueue = new
 	             PriorityQueue<StateNode>(new StateNodeComparator(ships_positions, stations_positions,"AS1"));
+		priorityQueue.add(initial_state);
+    	while(!priorityQueue.isEmpty()) {
+    		
+    		StateNode peek = priorityQueue.remove();
+    		visualizeGrid(peek);
+			System.out.println("search queue size: "+priorityQueue.size());
+    		if(peek.isGoal()) {
+				result = peek.printPath("");
+				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
+				result = result + ";" + deaths;
+				// System.out.println(peek.plan());
+    			break;
+    		}
+    		else {
+    			ArrayList<StateNode> nextNodes = getNextStates(peek);
+    			for (int i = 0; i < nextNodes.size(); i++) {
+    				if(nextNodes.get(i).getOperator().equals("retrieve")  && !nextNodes.get(i).shipsWrecked(ships_positions))
+    					continue;
+    				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
+    					priorityQueue.add(nextNodes.get(i));
+    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScoreGR1(ships_positions, stations_positions) + " " + nextNodes.get(i).operator);
+    					expandedNodes++;
+    				}
+				}
+    		}
+    	}
+		return result;
+    }
+	
+	public String solveAS2() {
+		String result = "";
+		PriorityQueue<StateNode> priorityQueue = new
+	             PriorityQueue<StateNode>(new StateNodeComparator(ships_positions, stations_positions,"AS2"));
 		priorityQueue.add(initial_state);
     	while(!priorityQueue.isEmpty()) {
     		
@@ -664,9 +737,9 @@ public class CoastGuard extends SearchProblem{
     public static void main(String[] args) {
     	///Cell[][] grid,Agent agent, StateNode parent, String operator, int depth, int path_cost
 //    	CoastGuard problem = new CoastGuard(instantiateGrid(genGrid()));
-    	String grid_str = "5,7;63;4,2;6,2,6,3;0,0,17,0,2,73,3,0,30;";
+    	String grid_str = "8,5;60;4,6;2,7;3,4,37,3,5,93,4,0,40;";
 //		grid_str = genGrid();
-    	System.out.println(solve(grid_str,"AS1",false));
+    	System.out.println(solve(grid_str,"BF",false));
 		System.out.println(grid_str);
     	
 //    	GenerateRandomNumber(40,1);

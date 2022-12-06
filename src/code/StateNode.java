@@ -51,20 +51,54 @@ public class StateNode{
 		}
 		return maxScore;
 	}
+	//this heuristic assumes we can do any operation without the need to move to the desired position. the coast guard agent
+	// 	can pickup, retrieve and drop without moving at all. for simplicity, the agent can pickup all passengers of any
+	// 	ship at once but he can't pick up more than one ship before dropping the passengers
+		// the heuristic calculates the number of cruical actions(non movement actions) needed to reach the goal state
+		
+	public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
+		float maxScore = 0;
+		ArrayList<Integer> ships_state = getShipsState(ships_positions);
+		int pickups=0;
+		int blackboxes=0;
+		for (int i = 0; i < ships_state.size(); i++) {
+			if (ships_state.get(i)==2) {
+				pickups++;
+				blackboxes++;
+			}
+			else if (ships_state.get(i)==1) {
+				blackboxes++;
+			}
+		}
+		//multiplied by 2 to account for the drop operation after each pickup, 
+		// it last pickup is followed by retrieve, thus the drop operation of the pickup is delayed after
+		// all available boxes are retrieved, and this is why we don't add drop operation for the retrieves if there are
+		// pickups
+		maxScore+= 2*pickups + blackboxes;
+		
+		if (pickups==0 && blackboxes >0) {
+			maxScore++;
+		}
+		//if the agent has something to drop and no other operations are available to do we return 1 for the drop operation
+		if (noShipHasBB(ships_state)&& agent.getBlackBoxes()!=0 || agent.getPassengersOnBoard()!=0) {
+			maxScore+=1;
+		}
+		return maxScore;
+	}
 	//this heuristic assumes we have infinte capacity, but we can carry the passengers of only one ship at a time.
-	//it tries to estimate the number of steps needed to achieve the goal by counting the steps from the agent 
-	// 	position till the end goal going through all the hubs in between
-	//if we had 2 ships the heuristic calculates the distance to the nearest ship for pickup + the sitance to the nearest
-	// 	station to drop + the distance to the nearest ship to pickup + the distance to the nearest station to drop
-	// 	+ the distance to the nearest blackboxes to retrieve + finally the distance to the nearest station to drop + 1
-	//possible states:
-		// looking for ship with passengers
-		// looking to drop off passengers
-		// looking for a ship with blackboxes
-		// looking to drop off blackboxes
-	public float calcMaxScoreGR1(ArrayList<int []> ships_position, ArrayList<int []> stations_position) {
+		//it tries to estimate the number of steps needed to achieve the goal by counting the steps from the agent 
+		// 	position till the end goal going through all the hubs in between
+		//if we had 2 ships the heuristic calculates the distance to the nearest ship for pickup + the sitance to the nearest
+		// 	station to drop + the distance to the nearest ship to pickup + the distance to the nearest station to drop
+		// 	+ the distance to the nearest blackboxes to retrieve + finally the distance to the nearest station to drop + 1
+		//possible states:
+			// looking for ship with passengers
+			// looking to drop off passengers
+			// looking for a ship with blackboxes
+			// looking to drop off blackboxes
+	public float calcMaxScoreGR1(ArrayList<int []> ships_positions, ArrayList<int []> stations_position) {
 		float maxScore = 0; 
-		int[] ship_pos=  nearestShipWithPassengers(ships_position);
+		int[] ship_pos=  nearestShipWithPassengers(ships_positions);
 		String look_for= "";
 		if(ship_pos != null) {
 			if(agent.getRemainingCapacity()== agent.getMaxCapacity()) {
@@ -78,7 +112,7 @@ public class StateNode{
 			}
 		}
 		else {
-			int[] BB_pos = nearestShipWithBBs(ships_position);
+			int[] BB_pos = nearestShipWithBBs(ships_positions);
 			if(BB_pos != null) {
 				// state 3
 				look_for= "retrieve";
@@ -89,14 +123,14 @@ public class StateNode{
 				look_for= "drop";
 			}
 		}
-		maxScore = planScore(look_for, ships_position, stations_position);
+		maxScore = planScore(look_for, ships_positions, stations_position);
 		
 		return maxScore;
 	}
-	private float planScore(String look_for, ArrayList<int[]> ships_position, ArrayList<int[]> stations_position) {
+	private float planScore(String look_for, ArrayList<int[]> ships_positions, ArrayList<int[]> stations_position) {
 		int plan_score= 1;
-		ArrayList<Integer> ships_state = getShipsState(ships_position);
-		if(allShipsEmpty(ships_state) ) {
+		ArrayList<Integer> ships_state = getShipsState(ships_positions);
+		if(noShipHasBB(ships_state) ) {
 			int[] nearest_station = nearestStation(stations_position);
 			if(nearest_station[0]== agent.getI() && nearest_station[1] == agent.getJ() && agent.getBlackBoxes()==0) {
 				return 0;
@@ -105,7 +139,7 @@ public class StateNode{
 		int[] curr_pos = new int[] {agent.getI(),agent.getJ()};
 		while(true) {
 			if(look_for.equals("pick")) {
-				int[] ship_pos = nearestShipWithPassengers(ships_position, ships_state);
+				int[] ship_pos = nearestShipWithPassengers(ships_positions, ships_state);
 				if(ship_pos == null) {
 					look_for = "retrieve";
 					continue;
@@ -115,7 +149,7 @@ public class StateNode{
 				look_for = "drop";
 			}
 			else if(look_for.equals("retrieve")) {
-				int[] ship_pos = nearestShipWithBBs(ships_position, ships_state);
+				int[] ship_pos = nearestShipWithBBs(ships_positions, ships_state);
 				if(ship_pos == null) {
 					look_for = "drop";
 					continue;
@@ -128,7 +162,7 @@ public class StateNode{
 				int[] station_pos = nearestStation(stations_position);
 				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], station_pos[0], station_pos[1], "man");
 				curr_pos = station_pos;
-				if(allShipsEmpty(ships_state)) {
+				if(noShipHasBB(ships_state)) {
 					break;
 					
 				}
@@ -149,7 +183,7 @@ public class StateNode{
 		this.operator = operator;
 	}
 
-	private boolean allShipsEmpty(ArrayList<Integer> ships_state) {
+	private boolean noShipHasBB(ArrayList<Integer> ships_state) {
 		for (int i = 0; i < ships_state.size(); i++) {
 			if(ships_state.get(i) >0)
 				return false;
@@ -477,8 +511,5 @@ public class StateNode{
 	}
 
 
-	public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	
 }
