@@ -41,3 +41,36 @@ longer retrievable.
   • Several stations are at random locations.
   • There are no wrecks.
   • No two items are in the same cell.
+  
+The coast guard can perform the following actions.
+ • Pick-up: The coast guard picks up as many passengers off a ship as its remaining
+capacity allows. This can be done on a ship that is in the same cell as the coast
+guard and it only affects this ship. Once a passenger is picked up by the coast
+guard, they will not expire and will stay on the coast guard boat until they are
+dropped at a station.
+ • Drop: The coast guard drops all passengers it is currently carrying at a station.
+This can only be done when the coast guard and the station are in the same cell
+and it resets the remaining capacity of the coast guard boat to 0.
+ • Retrieve: The coast guard boat retrieves a black box. This can only be done when
+the coast guard boat is in the same cell as a wreck with a black box which has
+not been completely damaged yet. This action does not affect the coast guard’s
+remaining capacity at all.
+ • Movement in any of the 4 directions (up, down, left, right) within the grid
+boundaries
+
+In this project, you will create an agent that acts as the coast guard boat captain
+using search. The agent has succeeded when there are no more un-expired passengers
+to save and no more undamaged black boxes to retrieve. Optimally, you would like to
+minimise the number of expired passengers and secondarily retrieve as many black boxes
+as possible. Several algorithms will be implemented and each will be used to play the
+game:
+a) Breadth-first search.
+b) Depth-first search.
+c) Iterative deepening search.
+d) Greedy search with at least two heuristics.
+e) A∗
+search with at least two admissible heuristics. A trivial heuristic (e.g.h(n) = 1)
+is not acceptable.
+Different solutions should be compared in terms run-time, number of expanded nodes,
+memory (RAM) utilisation and CPU utilisation. You are required to implement
+this agent using Java.
