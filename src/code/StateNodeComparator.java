@@ -17,9 +17,31 @@ public class StateNodeComparator implements Comparator<StateNode>{
 		}
 		@Override
 		public int compare(StateNode o1, StateNode o2) {
+			float score1=0;
+			float score2=0;
+			if(method.equals("GR1")){
+				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
+				score2 = o2.calcMaxScoreGR1(ships_positions, stations_positions);
+			}
+			else if(method.equals("GR2")) {
+				// change to gr2
+				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
+				score2 = o2.calcMaxScoreGR1(ships_positions, stations_positions);
+			}
+			else if(method.equals("AS1")) {
+				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
+				score1 +=o1.getPath_cost();
+				score2 = o2.calcMaxScoreGR1(ships_positions, stations_positions);
+				score2 +=o2.getPath_cost();
+			}
+			else if(method.equals("AS2")){
+				score1 = o1.calcMaxScoreGR1(ships_positions, stations_positions);
+				score1 +=o1.getPath_cost();
+				score2 = o2.calcMaxScoreGR1(ships_positions, stations_positions);
+				score2 +=o2.getPath_cost();
+			}
 			
-			float score1 = o1.calcMaxScore2(ships_positions, stations_positions, method);
-			float score2 = o2.calcMaxScore2(ships_positions, stations_positions, method);
+			
 			  if (score1 > score2)
 	                return 1;
 	            else if (score1 < score2)

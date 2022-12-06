@@ -20,6 +20,14 @@ public class StateNode{
 		this.path_cost = path_cost;
 	}
 
+	public int getPath_cost() {
+		return path_cost;
+	}
+
+	public void setPath_cost(int path_cost) {
+		this.path_cost = path_cost;
+	}
+
 	public boolean isGoal() {
     	// case 1
     	if(endGame()) {
@@ -54,7 +62,7 @@ public class StateNode{
 		// looking to drop off passengers
 		// looking for a ship with blackboxes
 		// looking to drop off blackboxes
-	public float calcMaxScore2(ArrayList<int []> ships_position, ArrayList<int []> stations_position, String method) {
+	public float calcMaxScoreGR1(ArrayList<int []> ships_position, ArrayList<int []> stations_position) {
 		float maxScore = 0; 
 		int[] ship_pos=  nearestShipWithPassengers(ships_position);
 		String look_for= "";
@@ -117,17 +125,28 @@ public class StateNode{
 				look_for = "drop";
 			}
 			else if(look_for.equals("drop")) {
-				if(allShipsEmpty(ships_state)) {
-					break;
-				}
 				int[] station_pos = nearestStation(stations_position);
 				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], station_pos[0], station_pos[1], "man");
 				curr_pos = station_pos;
+				if(allShipsEmpty(ships_state)) {
+					break;
+					
+				}
+				
+
 				look_for = "pick";
 			}
 			
 		}
 		return plan_score;
+	}
+
+	public String getOperator() {
+		return operator;
+	}
+
+	public void setOperator(String operator) {
+		this.operator = operator;
 	}
 
 	private boolean allShipsEmpty(ArrayList<Integer> ships_state) {
@@ -136,6 +155,18 @@ public class StateNode{
 				return false;
 		}
 		return true;
+	}
+	
+	private boolean allShipsWrecked(ArrayList<Integer> ships_state) {
+		for (int i = 0; i < ships_state.size(); i++) {
+			if(ships_state.get(i) >1)
+				return false;
+		}
+		return true;
+	}
+	
+	public boolean shipsWrecked(ArrayList<int[]> ships_positions) {
+		return allShipsWrecked(getShipsState(ships_positions));
 	}
 
 	private int[] nearestStation(ArrayList<int[]> stations_position) {
@@ -444,23 +475,10 @@ public class StateNode{
 		}
 		return true;
 	}
-//	public int getGridHC() {
-//		int counter = 0;
-//		for( int i=0; i< grid.length; i++) {
-//			for(int j=0; j<grid[0].length;j++) {
-//				
-//			}
-//		}
-//	}
-//	public int hashCode() {
-//		int agentHC = agent.hashCode();
-//		
-//		
-//		return agentHC;
-//	}
-//	public String toString() {
-//		visualizeGrid();
-//		return operator +" "+ depth + " " + path_cost + " " + agent.getI() + " " + agent.getJ();
-//	}
-//
+
+
+	public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
