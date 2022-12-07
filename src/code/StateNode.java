@@ -374,7 +374,7 @@ public class StateNode{
 		}
 		else {
 			System.out.println("-----------------------------------------");
-			visualizeGrid();
+//			visualizeGrid();
 		}
 		return result;
 	}
