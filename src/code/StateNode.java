@@ -395,8 +395,12 @@ public class StateNode{
 			System.out.print(pad_string(col_index++)+"|");
             for(int j=0;j<grid[i].length;j++){
             	if(agent.getI()== i && agent.getJ() ==j){
-            		if(grid[i][j] instanceof Ship) {
-            			System.out.print(pad_string(((Ship)(grid[i][j])).getNoOfPassengers()+"*") + "|");
+            		if(grid[i][j] instanceof Ship ) {
+            			Ship curr_ship = ((Ship)grid[i][j]);
+            			if(curr_ship.getNoOfPassengers()>0)
+            				System.out.print(pad_string(curr_ship.getNoOfPassengers()+"*") + "|");
+            			else
+            				System.out.print(pad_string(-curr_ship.getBlackBoxDamage()+"*") + "|");
             		}
             		else {
             			System.out.print(pad_string(grid[i][j] + "*")+"|");
@@ -405,7 +409,11 @@ public class StateNode{
             	}
             	else{
             		if(grid[i][j] instanceof Ship) {
-            			System.out.print(pad_string(((Ship)(grid[i][j])).getNoOfPassengers()) + "|");
+            			Ship curr_ship = ((Ship)grid[i][j]);
+            			if(curr_ship.getNoOfPassengers()>0)
+            				System.out.print(pad_string(curr_ship.getNoOfPassengers()+"") + "|");
+            			else
+            				System.out.print(pad_string(-curr_ship.getBlackBoxDamage()+"") + "|");
             		}
             		else {
             			System.out.print(pad_string(grid[i][j]+"")+"|");

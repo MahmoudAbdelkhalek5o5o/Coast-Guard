@@ -301,8 +301,12 @@ public class CoastGuard extends SearchProblem{
 			System.out.print(pad_string(col_index++)+"|");
             for(int j=0;j<grid[i].length;j++){
             	if(agent.getI()== i && agent.getJ() ==j){
-            		if(grid[i][j] instanceof Ship) {
-            			System.out.print(pad_string(((Ship)(grid[i][j])).getNoOfPassengers()+"*") + "|");
+            		if(grid[i][j] instanceof Ship ) {
+            			Ship curr_ship = ((Ship)grid[i][j]);
+            			if(curr_ship.getNoOfPassengers()>0)
+            				System.out.print(pad_string(curr_ship.getNoOfPassengers()+"*") + "|");
+            			else
+            				System.out.print(pad_string(-curr_ship.getBlackBoxDamage()+"*") + "|");
             		}
             		else {
             			System.out.print(pad_string(grid[i][j] + "*")+"|");
@@ -310,8 +314,12 @@ public class CoastGuard extends SearchProblem{
             		
             	}
             	else{
-            		if(grid[i][j] instanceof Ship) {
-            			System.out.print(pad_string(((Ship)(grid[i][j])).getNoOfPassengers()) + "|");
+            		if(grid[i][j] instanceof Ship ) {
+            			Ship curr_ship = ((Ship)grid[i][j]);
+            			if(curr_ship.getNoOfPassengers()>0)
+            				System.out.print(pad_string(curr_ship.getNoOfPassengers()+"") + "|");
+            			else
+            				System.out.print(pad_string(-curr_ship.getBlackBoxDamage()+"") + "|");
             		}
             		else {
             			System.out.print(pad_string(grid[i][j]+"")+"|");
@@ -606,18 +614,22 @@ public class CoastGuard extends SearchProblem{
     	Agent agent = parent.agent;
     	Cell[][] newGrid= generalUpdateState(cloneGrid(parent.getGrid()));
     	int pathCostAddition = getPathCostDiff(parent.getGrid());//calculates the number of people who'd have normally died anyway
+    	// moving down node
     	if(agent.getI()<height-1 && !repeatedAncestorsAgentPositions(parent, agent.getI() +1, agent.getJ())) {
     		Agent newAgent = agent.copyAgentWithModification(agent.getI() +1, agent.getJ());
     		neighbors.add(new StateNode(newGrid,newAgent,parent,"down",parent.depth+1,parent.path_cost+pathCostAddition));
     	}
+    	// moving up node
     	if(agent.getI()>0 && !repeatedAncestorsAgentPositions(parent, agent.getI() - 1, agent.getJ())) {
     		Agent newAgent = agent.copyAgentWithModification(agent.getI() -1, agent.getJ());
     		neighbors.add(new StateNode(newGrid,newAgent,parent,"up",parent.depth+1,parent.path_cost+pathCostAddition));
     	}
+    	// moving right node
     	if(agent.getJ()<width-1 && !repeatedAncestorsAgentPositions(parent, agent.getI(), agent.getJ() +1)) {
     		Agent newAgent = agent.copyAgentWithModification(agent.getI(), agent.getJ()+1);
     		neighbors.add(new StateNode(newGrid,newAgent,parent, "right",parent.depth+1,parent.path_cost+pathCostAddition));
     	}
+    	// moving left node
     	if(agent.getJ()>0 && !repeatedAncestorsAgentPositions(parent, agent.getI(), agent.getJ() -1)) {
     		Agent newAgent = agent.copyAgentWithModification(agent.getI(), agent.getJ()-1);
     		neighbors.add(new StateNode(newGrid, newAgent, parent, "left",parent.depth+1,parent.path_cost+pathCostAddition));
@@ -633,7 +645,7 @@ public class CoastGuard extends SearchProblem{
     		// update passengers on board the ship of the new Grid
     		ship.setNoOfPassengers(ship.getNoOfPassengers()-retrievablePeople);
     		newAgent.setSavedPassengers(newAgent.getSavedPassengers()+retrievablePeople);
-    		pathCostAddition -= retrievablePeople ;
+    		pathCostAddition -= retrievablePeople*223 ;
         	neighbors.add(new StateNode(generalUpdateState(pickupGrid), newAgent , parent,"pickup",parent.depth+1,parent.path_cost+pathCostAddition));
     	}
 		// retrieve
@@ -643,6 +655,7 @@ public class CoastGuard extends SearchProblem{
 			Agent newAgent = agent.clone();
     		newAgent.setBlackBoxes(newAgent.getBlackBoxes()+1);
     		ship.setBlackBoxDamage(20);
+    		pathCostAddition -=1;
     		// update the box on the ship
         	neighbors.add(new StateNode(generalUpdateState(retrieveGrid), newAgent , parent,"retrieve",parent.depth+1,parent.path_cost+pathCostAddition));
     	}
@@ -660,12 +673,16 @@ public class CoastGuard extends SearchProblem{
 	private static int getPathCostDiff(Cell[][] grid) {
     	//we use the people deaths as path cost
     	int deaths =0;
+    	int blackBoxes = 0;
 		for (int i = 0; i < ships_positions.size(); i++) {
 			Ship ship = (Ship) grid[ships_positions.get(i)[0]][ships_positions.get(i)[1]];
 			if(ship.getNoOfPassengers()>=1)
 				deaths += 1;
+			else if(ship.hasBlackBox()) {
+				blackBoxes++;
+			}
 		}
-		return deaths;
+		return deaths*223 + blackBoxes ;
 	}
 
 	public static Cell[][]cloneGrid(Cell[][]grid){
@@ -708,6 +725,7 @@ public class CoastGuard extends SearchProblem{
     public static void main(String[] args) {
 
     	String grid_str = "8,5;60;4,6;2,7;3,4,37,3,5,93,4,0,40;";
+    	//String grid_str = "2,2;60;0,0;0,1;1,0,80,1,1,100";
     	//grid_str = genGrid();
 	
 		Runtime rt = Runtime.getRuntime();
@@ -716,8 +734,8 @@ public class CoastGuard extends SearchProblem{
 		long startTime = System.nanoTime();
 		
 		// SOLVE GET HERE
-    	solve(grid_str,"GR2",true);
-
+    	String res = solve(grid_str,"AS1",true);
+    	System.out.println(res);
 		
 		long elapsedTime = System.nanoTime() - startTime;
 		long new_used_mem = rt.totalMemory() - rt.freeMemory();
