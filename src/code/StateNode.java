@@ -150,10 +150,7 @@ public class StateNode{
 				curr_pos = station_pos;
 				if(noShipHasBB(ships_state)) {
 					break;
-					
 				}
-				
-
 				look_for = "pick";
 			}
 			
