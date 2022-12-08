@@ -37,25 +37,11 @@ public class StateNode{
     	
     	return endGame();
     }
-	public float calcMaxScore(ArrayList<int []> ships_position, ArrayList<int []> stations_position, String method) {
-		float maxScore = 0; 
-		for (int i = 0; i < ships_position.size(); i++) {
-			float score = formula(ships_position.get(i)[0], ships_position.get(i)[1], method);
-			if(score>maxScore)
-				maxScore=score;
-		}
-		for (int i = 0; i < stations_position.size(); i++) {
-			float score = formula(stations_position.get(i)[0], stations_position.get(i)[1], method);
-			if(score>maxScore)
-				maxScore=score;
-		}
-		return maxScore;
-	}
+	
 	//this heuristic assumes we can do any operation without the need to move to the desired position. the coast guard agent
 	// 	can pickup, retrieve and drop without moving at all. for simplicity, the agent can pickup all passengers of any
 	// 	ship at once but he can't pick up more than one ship before dropping the passengers
 		// the heuristic calculates the number of cruical actions(non movement actions) needed to reach the goal state
-		
 	public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
 		float maxScore = 0;
 		ArrayList<Integer> ships_state = getShipsState(ships_positions);
@@ -334,46 +320,14 @@ public class StateNode{
 		return res;
 	}
 
-	public float formula(int i, int j, String method) {
-		if (agent.getI()==1 && agent.getJ()==1 && operator=="retrieve")
-			System.out.println("7oooda"+operator);
-		
-		double distance=0;
-		if(method.equals("Man")) {
-			distance = Math.abs(i-agent.getI()) + Math.abs(j-agent.getJ());
-		}
-		if(method.equals("Euc")) {
-			distance = Math.sqrt(Math.pow(i-agent.getI(),2) + Math.pow(j-agent.getJ(),2));
-		}
-		int nominator=0;
-		if(grid[i][j] instanceof Ship) {
-			Ship ship = ((Ship)grid[i][j]);
-			if (agent.getRemainingCapacity()>0) {
-				nominator = 10000*ship.getNoOfPassengers()+100*(20-ship.getBlackBoxDamage())+ 10000*agent.getSavedPassengers()+ 10000*agent.getBlackBoxes();
-			}
-		}
-		if(grid[i][j] instanceof Station) {
-			nominator = agent.getBlackBoxes()+agent.getPassengersOnBoard();
-			if (agent.getRemainingCapacity()==0) {
-				nominator +=1000000;
-			}
-			
-			if (agent.getI()==i && agent.getJ()==j) {
-				nominator +=100000000;
-			}
-		}
-		
-		distance++;
-		return (float)(nominator/distance);
-	}
-	
+
 	public String printPath(String result) {
 		if(this.parent!=null) {
 			result = parent.printPath(result) + "," + operator;
 			// System.out.print("," + operator);
 		}
 		else {
-			System.out.println("-----------------------------------------");
+//			System.out.println("-----------------------------------------");
 //			visualizeGrid();
 		}
 		return result;

@@ -2,6 +2,8 @@ package code;
 
 import java.lang.Math;
 import java.util.*;
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
 
 public class CoastGuard extends SearchProblem{
     static int grid_min = 2;
@@ -16,12 +18,13 @@ public class CoastGuard extends SearchProblem{
     Map <String, ArrayList<StateNode>> isVisitedDict = new Hashtable<String, ArrayList<StateNode>>();
     int initialPassengers;
     int expandedNodes;
-//    Map <String, StateNode> isVisitedDict = new Hashtable<String, StateNode>();
-    // Agent agent;
     static int width;
     static int height;
     static ArrayList<int[]>ships_positions;
     static ArrayList<int[]>stations_positions;
+    static OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    static double cpu = bean.getProcessCpuLoad();
+    static boolean cpu_read_once_flag = true;
     public CoastGuard(Object [] info){
     	Cell [][]initialGrid = ((Cell [][])(info[0]));
     	Agent agent = ((Agent)(info[1]));
@@ -31,7 +34,6 @@ public class CoastGuard extends SearchProblem{
         this.initial_state = new StateNode(initialGrid,agent, null,null,0,0);
         searchQueue.add(initial_state);
 		searchStack.push(initial_state);
-//		isVisitedDict.put(agent.getI()+","+agent.getJ(),initial_state);
         insertInsideVisitedIfNotThere(agent.getAgentInfoString(),initial_state);
         height = initialGrid.length;
         width = initialGrid[0].length;
@@ -106,8 +108,6 @@ public class CoastGuard extends SearchProblem{
         int agent_row_loc = GenerateRandomNumber( m-1 , 0 );
         int agent_col_loc = GenerateRandomNumber( n-1 , 0 );
         grid[agent_row_loc][agent_col_loc]= -1;
-//		grid[agent_row_loc][agent_col_loc]
-//        grid[ agent_row_loc ][ agent_col_loc ] = -1; // here
         System.out.println("Agent_position: "+ agent_row_loc +" "+ agent_col_loc);
         // Generate the number of the ships at least one ship, at most cells-2 ships leaving 2 places for a station and agent
         int ship_number = GenerateRandomNumber( cells_number-2 , 1 );
@@ -216,7 +216,6 @@ public class CoastGuard extends SearchProblem{
         // creating and localizing agent
         int agent_capacity = Integer.parseInt(grid_split[1]);
         String [] agent_position = grid_split[2].split(",");
-//        grid[Integer.parseInt(agent_position[0])][Integer.parseInt(agent_position[1])] =
         Agent agent = new Agent(Integer.parseInt(agent_position[0]), Integer.parseInt(agent_position[1]), agent_capacity);
 
 
@@ -225,7 +224,7 @@ public class CoastGuard extends SearchProblem{
         //XXX changed the condition by -1
         stations_positions = new ArrayList<int[]>();
         for(int i =0;i<stations_position_string.length-1;i=i+2){
-        	System.out.println(stations_position_string[i+1]);
+//        	System.out.println(stations_position_string[i+1]);
             grid[Integer.parseInt(stations_position_string[i])][Integer.parseInt(stations_position_string[i+1])] =
                     new Station(Integer.parseInt(stations_position_string[i]), Integer.parseInt(stations_position_string[i+1]));
             stations_positions.add(new int[] {Integer.parseInt(stations_position_string[i]), Integer.parseInt(stations_position_string[i+1])});
@@ -247,29 +246,21 @@ public class CoastGuard extends SearchProblem{
             }
         }
         // print
-        System.out.println("------------------------------------------------------------------");
+//        System.out.println("------------------------------------------------------------------");
         
-//        visualizeGrid(grid, agent);
-//        System.out.println(agent);
+
         return new Object [] {grid,agent};
     }
 	public static void visualizeGrid(Cell [][] grid, Agent agent) {
 		int col_index=0;
-//		String pad_space = "  ";
 		System.out.print(pad_string(-1)+ "|");
 		for(int row_index=0;row_index<grid[0].length;row_index++){
-			
-//			if(row_index>9) {
-//				pad_space =" ";
-//			}
 			System.out.print(pad_string(row_index)+"|");
 		}
         System.out.println();
-//        pad_space = "  ";
+
 		for(int i=0;i<grid.length;i++){
-//			if(col_index>9) {
-//				pad_space =" ";
-//			}
+
 			System.out.print(pad_string(col_index++)+"|");
             for(int j=0;j<grid[i].length;j++){
             	if(agent.getI()== i && agent.getJ() ==j){
@@ -279,7 +270,6 @@ public class CoastGuard extends SearchProblem{
             		else {
             			System.out.print(pad_string(grid[i][j] + "*")+"|");
             		}
-            		
             	}
             	else{
             		if(grid[i][j] instanceof Ship) {
@@ -287,15 +277,12 @@ public class CoastGuard extends SearchProblem{
             		}
             		else {
             			System.out.print(pad_string(grid[i][j]+"")+"|");
-            		}
-            		
-//            		System.out.print(pad_string(grid[i][j]+"")+ "|");
-            		
+            		}	
             	}
             }
             System.out.println();
         }
-		System.out.println("-----------------------------------------------------------------");
+//		System.out.println("-----------------------------------------------------------------");
 	}
 	public static void visualizeGrid(StateNode state) {
 		Cell[][] grid = state.getGrid();
@@ -329,9 +316,6 @@ public class CoastGuard extends SearchProblem{
             		else {
             			System.out.print(pad_string(grid[i][j]+"")+"|");
             		}
-            		
-
-            		
             	}
             }
             System.out.println();
@@ -353,7 +337,6 @@ public class CoastGuard extends SearchProblem{
 		}
 	}
     public static String solve(String grid_string, String strategy, boolean visualize){
-        //Cell [][] grid = instantiateGrid(grid_string);
         CoastGuard problem = new CoastGuard(instantiateGrid(grid_string));
 		String result = "";
         switch(strategy){
@@ -380,8 +363,6 @@ public class CoastGuard extends SearchProblem{
     	while(!searchQueue.isEmpty()) {
 
     		StateNode peek = searchQueue.remove();
-    		//visualizeGrid(peek);
-			//System.out.println("search queue size: "+searchQueue.size());
     		if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -398,7 +379,6 @@ public class CoastGuard extends SearchProblem{
     					searchQueue.add(nextNodes.get(i));
     					expandedNodes++;
     				}
-//    				searchQueue.add(nextNodes.get(i));
 				}
     		}
     	}
@@ -409,8 +389,6 @@ public class CoastGuard extends SearchProblem{
 		String result = "";
 		while(!searchStack.isEmpty()) {
 			StateNode peek = searchStack.pop();
-			// visualizeGrid(peek);
-//			System.out.println(searchStack.size());
 			if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -427,8 +405,6 @@ public class CoastGuard extends SearchProblem{
 						searchStack.push(nextNodes.get(i));
 						expandedNodes++;
     				}
-					
-//					searchStack.push(nextNodes.get(i));
 				}
 			}
 		}
@@ -444,10 +420,7 @@ public class CoastGuard extends SearchProblem{
 		if (searchStack.isEmpty())
 			searchStack.push(initial_state);
 		while(!searchStack.isEmpty()) {
-			//System.out.println("iterative: " + iterative);
 			StateNode peek = searchStack.pop();
-			//visualizeGrid(peek);
-			//System.out.println("searchStackSize: " + searchStack.size());
 			if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -482,8 +455,6 @@ public class CoastGuard extends SearchProblem{
     	while(!priorityQueue.isEmpty()) {
     		
     		StateNode peek = priorityQueue.remove();
-    		// visualizeGrid(peek);
-			// System.out.println("search queue size: "+priorityQueue.size());
     		if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -491,7 +462,6 @@ public class CoastGuard extends SearchProblem{
 				if(visualize){
 					visualizePlan(peek);
 				}
-				// System.out.println(peek.plan());
     			break;
     		}
     		else {
@@ -501,7 +471,6 @@ public class CoastGuard extends SearchProblem{
     					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
-    					// System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScoreGR1(ships_positions, stations_positions) + " " + nextNodes.get(i).operator);
     					expandedNodes++;
     				}
 				}
@@ -518,8 +487,6 @@ public class CoastGuard extends SearchProblem{
     	while(!priorityQueue.isEmpty()) {
     		
     		StateNode peek = priorityQueue.remove();
-    		// visualizeGrid(peek);
-			// System.out.println("search queue size: "+priorityQueue.size());
     		if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -527,7 +494,6 @@ public class CoastGuard extends SearchProblem{
 				if(visualize){
 					visualizePlan(peek);
 				}
-				// System.out.println(peek.plan());
     			break;
     		}
     		else {
@@ -537,10 +503,8 @@ public class CoastGuard extends SearchProblem{
     					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
-//    					System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScore(ships_positions, stations_positions,"Euc") + " " + nextNodes.get(i).operator);
     					expandedNodes++;
     				}
-//    				searchQueue.add(nextNodes.get(i));
 				}
     		}
     	}
@@ -554,8 +518,6 @@ public class CoastGuard extends SearchProblem{
     	while(!priorityQueue.isEmpty()) {
     		
     		StateNode peek = priorityQueue.remove();
-    		// visualizeGrid(peek);
-			// System.out.println("search queue size: "+priorityQueue.size());
     		if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -563,7 +525,6 @@ public class CoastGuard extends SearchProblem{
 				if(visualize){
 					visualizePlan(peek);
 				}
-				// System.out.println(peek.plan());
     			break;
     		}
     		else {
@@ -573,7 +534,6 @@ public class CoastGuard extends SearchProblem{
     					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
-    			//		System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScoreGR1(ships_positions, stations_positions) + " " + nextNodes.get(i).operator);
     					expandedNodes++;
     				}
 				}
@@ -590,8 +550,6 @@ public class CoastGuard extends SearchProblem{
     	while(!priorityQueue.isEmpty()) {
     		
     		StateNode peek = priorityQueue.remove();
-    		// visualizeGrid(peek);
-			// System.out.println("search queue size: "+priorityQueue.size());
     		if(peek.isGoal()) {
 				result = peek.printPath("");
 				int deaths = initialPassengers - peek.getAgent().getSavedPassengers();
@@ -599,7 +557,6 @@ public class CoastGuard extends SearchProblem{
 				if(visualize){
 					visualizePlan(peek);
 				}
-				// System.out.println(peek.plan());
     			break;
     		}
     		else {
@@ -609,7 +566,6 @@ public class CoastGuard extends SearchProblem{
     					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
-    				//	System.out.println("Hey there I am over here "+nextNodes.get(i).calcMaxScoreGR1(ships_positions, stations_positions) + " " + nextNodes.get(i).operator);
     					expandedNodes++;
     				}
 				}
@@ -623,15 +579,7 @@ public class CoastGuard extends SearchProblem{
     	if (node.parent == null) {
     		return false;
     	}
-//		else{
-//			StateNode parent = node.parent;
-//    		if(parent.agent.getI()==i && parent.agent.getJ() == j) {
-//    			return true;
-//    		}
-//    		else {
-//    			return repeatedAncestorsAgentPositions(parent,i,j);
-//    		}
-//		}
+
     	else if (node.operator=="up" || node.operator=="right" || node.operator=="left" || node.operator=="down"){
     		StateNode parent = node.parent;
     		if(parent.agent.getI()==i && parent.agent.getJ() == j) {
@@ -648,9 +596,14 @@ public class CoastGuard extends SearchProblem{
     
     public static ArrayList<StateNode> getNextStates(StateNode parent) {
     	ArrayList<StateNode> neighbors= new ArrayList<StateNode>();
+    	if(cpu_read_once_flag) {
+	    	while( cpu <= 0){
+				cpu = bean.getProcessCpuLoad();
+			}
+	    	cpu_read_once_flag = false;
+    	}
     	// update parent state
     	Agent agent = parent.agent;
-//    	Cell[][] grid = parent.grid;
     	Cell[][] newGrid= generalUpdateState(cloneGrid(parent.getGrid()));
     	int pathCostAddition = getPathCostDiff(parent.getGrid());//calculates the number of people who'd have normally died anyway
     	if(agent.getI()<height-1 && !repeatedAncestorsAgentPositions(parent, agent.getI() +1, agent.getJ())) {
@@ -677,7 +630,6 @@ public class CoastGuard extends SearchProblem{
     		int retrievablePeople= Math.min(agent.getRemainingCapacity(), ship.getNoOfPassengers());
 			Agent newAgent = agent.clone();
 			newAgent.setRemainingCapacity(newAgent.getRemainingCapacity()-retrievablePeople);
-    		// Agent newAgent = agent.copyAgentWithModification(agent.getI(), agent.getJ(), agent.getPassengersOnBoard() + retrievablePeople, agent.getBlackBoxes());
     		// update passengers on board the ship of the new Grid
     		ship.setNoOfPassengers(ship.getNoOfPassengers()-retrievablePeople);
     		newAgent.setSavedPassengers(newAgent.getSavedPassengers()+retrievablePeople);
@@ -689,7 +641,6 @@ public class CoastGuard extends SearchProblem{
     		Cell [][]retrieveGrid = cloneGrid(parent.getGrid());
     		Ship ship = ((Ship)(retrieveGrid[agent.getI()][agent.getJ()]));
 			Agent newAgent = agent.clone();
-    		// Agent newAgent = agent.copyAgentWithModification(agent.getI(), agent.getJ());
     		newAgent.setBlackBoxes(newAgent.getBlackBoxes()+1);
     		ship.setBlackBoxDamage(20);
     		// update the box on the ship
@@ -698,9 +649,7 @@ public class CoastGuard extends SearchProblem{
 		// drop
     	if(currentCell instanceof Station && agent.getPassengersOnBoard()>0) {
     		Cell [][]dropGrid = cloneGrid(parent.getGrid());
-    		// int dropablePeople= agent.getPassengersOnBoard();
 			Agent newAgent = agent.clone();
-    		// Agent newAgent = agent.copyAgentWithModification(agent.getI(), agent.getJ(),0,0);
     		newAgent.setPassengersOnBoard(0);
     		newAgent.setBlackBoxes(0);
         	neighbors.add(new StateNode(generalUpdateState(dropGrid), newAgent , parent,"drop",parent.depth+1,parent.path_cost+pathCostAddition));
@@ -708,10 +657,6 @@ public class CoastGuard extends SearchProblem{
     	}
     	return neighbors;
     }
-//    private static int peopleWhoWouldDie() {
-//		// TODO Auto-generated method stub
-//		return 0;
-//	}
 	private static int getPathCostDiff(Cell[][] grid) {
     	//we use the people deaths as path cost
     	int deaths =0;
@@ -739,7 +684,6 @@ public class CoastGuard extends SearchProblem{
     		int row = ships_positions.get(i)[0];
     		int col = ships_positions.get(i)[1];
     		Cell [][] newGrid = parent;
-//    		System.out.println(newGrid[row][col]+" "+ row+ " "+ col+ " "+ (newGrid[row][col]instanceof Cell));
     		Ship ship= (Ship)(newGrid[row][col]);
     		ship.decrement();
 		}
@@ -762,26 +706,31 @@ public class CoastGuard extends SearchProblem{
     	return count;
     }
     public static void main(String[] args) {
-    	///Cell[][] grid,Agent agent, StateNode parent, String operator, int depth, int path_cost
-//    	CoastGuard problem = new CoastGuard(instantiateGrid(genGrid()));
+
     	String grid_str = "8,5;60;4,6;2,7;3,4,37,3,5,93,4,0,40;";
-//		grid_str = genGrid();
-    	System.out.println(solve(grid_str,"GR2",true));
-		System.out.println(grid_str);
+    	//grid_str = genGrid();
+	
+		Runtime rt = Runtime.getRuntime();
+
+		long old_used_mem = rt.totalMemory() - rt.freeMemory();
+		long startTime = System.nanoTime();
+		
+		// SOLVE GET HERE
+    	solve(grid_str,"GR2",true);
+
+		
+		long elapsedTime = System.nanoTime() - startTime;
+		long new_used_mem = rt.totalMemory() - rt.freeMemory();
+		System.out.println( "Total memory used:  " + ((new_used_mem - old_used_mem)/1000000) + " MegaByte");
+		
+		System.out.println("Cpu while the code is running: "+ ((cpu)*100) +"%");
+		cpu = bean.getProcessCpuLoad();
+		while( cpu <= 0){
+			cpu = bean.getProcessCpuLoad();
+		}
+		System.out.println("Cpu usage after the code is finished: "+ ((cpu)*100) +"%");
+		System.out.println("RunTime: "+ (elapsedTime/1000000.0) + " MilliSecond");
+		
     	
-//    	GenerateRandomNumber(40,1);
-//    	solve("5,5;47;1,0;0,0,2,0,2,1,2,4,3,2,3,3;0,1,3,0,2,5,0,4,7,1,1,5,1,2,10,1,4,5,3,0,3,3,1,4,4,0,4,4,1,5,4,2,7,4,4,5;","BF",false);
-//		solve(genGrid(),"DF",false);
-//    	problem.solve(null, null, false)
-//      solve(genGrid(),"BF",false);
-//    	Cell[][] grid = instantiateGrid(genGrid());
-//    	Agent agent = null;
-//    	StateNode a = new StateNode(grid, agent, null, null, 0, 0);
-//    	StateNode b = a.clone();
-//    	((Ship)(a.grid[0][0])).setNoOfPassengers(0);
-//    	System.out.println("-------------" + ((Ship)(a.grid[0][0])).getNoOfPassengers());
-//    	visualizeGrid(a.grid);
-//    	System.out.println("-------------" + ((Ship)(b.grid[0][0])).getNoOfPassengers());
-//    	visualizeGrid(b.grid);
     }
 }
