@@ -38,39 +38,7 @@ public class StateNode{
     	return endGame();
     }
 	
-	//this heuristic assumes we can do any operation without the need to move to the desired position. the coast guard agent
-	// 	can pickup, retrieve and drop without moving at all. for simplicity, the agent can pickup all passengers of any
-	// 	ship at once but he can't pick up more than one ship before dropping the passengers
-		// the heuristic calculates the number of cruical actions(non movement actions) needed to reach the goal state
-	public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
-		float maxScore = 0;
-		ArrayList<Integer> ships_state = getShipsState(ships_positions);
-		int pickups=0;
-		int blackboxes=0;
-		for (int i = 0; i < ships_state.size(); i++) {
-			if (ships_state.get(i)==2) {
-				pickups++;
-				blackboxes++;
-			}
-			else if (ships_state.get(i)==1) {
-				blackboxes++;
-			}
-		}
-		//multiplied by 2 to account for the drop operation after each pickup, 
-		// it last pickup is followed by retrieve, thus the drop operation of the pickup is delayed after
-		// all available boxes are retrieved, and this is why we don't add drop operation for the retrieves if there are
-		// pickups
-		maxScore+= 2*pickups + blackboxes;
-		
-		if (pickups==0 && blackboxes >0) {
-			maxScore++;
-		}
-		//if the agent has something to drop and no other operations are available to do we return 1 for the drop operation
-		if (noShipHasBB(ships_state)&& agent.getBlackBoxes()!=0 || agent.getPassengersOnBoard()!=0) {
-			maxScore+=1;
-		}
-		return maxScore;
-	}
+	
 	//this heuristic assumes we have infinte capacity, but we can carry the passengers of only one ship at a time.
 		//it tries to estimate the number of steps needed to achieve the goal by counting the steps from the agent 
 		// 	position till the end goal going through all the hubs in between
@@ -87,7 +55,7 @@ public class StateNode{
 		int[] ship_pos=  nearestShipWithPassengers(ships_positions);
 		String look_for= "";
 		if(ship_pos != null) {
-			if(agent.getRemainingCapacity()== agent.getMaxCapacity()) {
+			if(agent.getRemainingCapacity()>0) {
 				// state 1
 				look_for= "pick";
 			}
@@ -116,6 +84,7 @@ public class StateNode{
 	private float planScore(String look_for, ArrayList<int[]> ships_positions, ArrayList<int[]> stations_position) {
 		int plan_score= 1;
 		ArrayList<Integer> ships_state = getShipsState(ships_positions);
+		int curr_agent_capacity = agent.getRemainingCapacity();
 		if(noShipHasBB(ships_state) ) {
 			int[] nearest_station = nearestStation(stations_position);
 			if(nearest_station[0]== agent.getI() && nearest_station[1] == agent.getJ() && agent.getBlackBoxes()==0) {
@@ -132,7 +101,15 @@ public class StateNode{
 				}
 				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], ship_pos[0], ship_pos[1], "man");
 				curr_pos = ship_pos;
-				look_for = "drop";
+				//enhancement
+				curr_agent_capacity-= ((Ship)(grid[ship_pos[0]][ship_pos[1]])).getNoOfPassengers();
+				if(curr_agent_capacity<=0) {
+					look_for = "drop";
+					curr_agent_capacity=0;
+				}
+				else {
+					look_for = "pick";
+				}
 			}
 			else if(look_for.equals("retrieve")) {
 				int[] ship_pos = nearestShipWithBBs(ships_positions, ships_state);
@@ -146,6 +123,7 @@ public class StateNode{
 			}
 			else if(look_for.equals("drop")) {
 				int[] station_pos = nearestStation(stations_position);
+				curr_agent_capacity=agent.getMaxCapacity();
 				plan_score+= calcDistanceBetween(curr_pos[0], curr_pos[1], station_pos[0], station_pos[1], "man");
 				curr_pos = station_pos;
 				if(noShipHasBB(ships_state)) {
@@ -157,6 +135,40 @@ public class StateNode{
 		}
 		return plan_score;
 	}
+	
+	//this heuristic assumes we can do any operation without the need to move to the desired position. the coast guard agent
+		// 	can pickup, retrieve and drop without moving at all. for simplicity, the agent can pickup all passengers of any
+		// 	ship at once but he can't pick up more than one ship before dropping the passengers
+			// the heuristic calculates the number of cruical actions(non movement actions) needed to reach the goal state
+		public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
+			float maxScore = 0;
+			ArrayList<Integer> ships_state = getShipsState(ships_positions);
+			int pickups=0;
+			int blackboxes=0;
+			for (int i = 0; i < ships_state.size(); i++) {
+				if (ships_state.get(i)==2) {
+					pickups++;
+					blackboxes++;
+				}
+				else if (ships_state.get(i)==1) {
+					blackboxes++;
+				}
+			}
+			//multiplied by 2 to account for the drop operation after each pickup, 
+			// it last pickup is followed by retrieve, thus the drop operation of the pickup is delayed after
+			// all available boxes are retrieved, and this is why we don't add drop operation for the retrieves if there are
+			// pickups
+			maxScore+= 2*pickups + blackboxes;
+			
+			if (pickups==0 && blackboxes >0) {
+				maxScore++;
+			}
+			//if the agent has something to drop and no other operations are available to do we return 1 for the drop operation
+			if (noShipHasBB(ships_state)&& agent.getBlackBoxes()!=0 || agent.getPassengersOnBoard()!=0) {
+				maxScore+=1;
+			}
+			return maxScore;
+		}
 
 	public String getOperator() {
 		return operator;
@@ -436,6 +448,10 @@ public class StateNode{
     		break;
     	case 3:
     		padded = " "+ str+" ";
+    		break;
+    	case 4:
+    		padded = ""+ str+" ";
+    		break;
     	}
 		return padded;
 	}

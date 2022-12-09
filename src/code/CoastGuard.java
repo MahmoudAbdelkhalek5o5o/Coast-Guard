@@ -202,6 +202,10 @@ public class CoastGuard extends SearchProblem{
     		break;
     	case 3:
     		padded = " "+ str+" ";
+    		break;
+    	case 4:
+    		padded = ""+ str+" ";
+    		break;
     	}
 		return padded;
 	}
@@ -734,7 +738,7 @@ public class CoastGuard extends SearchProblem{
 		long startTime = System.nanoTime();
 		
 		// SOLVE GET HERE
-    	String res = solve(grid_str,"AS1",true);
+    	String res = solve(grid_str,"GR1",true);
     	System.out.println(res);
 		
 		long elapsedTime = System.nanoTime() - startTime;
