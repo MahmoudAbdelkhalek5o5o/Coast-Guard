@@ -143,14 +143,10 @@ public class StateNode{
 		public float calcMaxScoreGR2(ArrayList<int[]> ships_positions, ArrayList<int[]> stations_positions) {
 			float maxScore = 0;
 			ArrayList<Integer> ships_state = getShipsState(ships_positions);
-			int pickups=0;
+			int pickups= getGridPassengers(ships_positions)/ agent.getMaxCapacity();
 			int blackboxes=0;
 			for (int i = 0; i < ships_state.size(); i++) {
-				if (ships_state.get(i)==2) {
-					pickups++;
-					blackboxes++;
-				}
-				else if (ships_state.get(i)==1) {
+				if (ships_state.get(i)>1) {
 					blackboxes++;
 				}
 			}
@@ -168,6 +164,15 @@ public class StateNode{
 				maxScore+=1;
 			}
 			return maxScore;
+		}
+
+	private int getGridPassengers(ArrayList<int[]> ships_positions) {
+			int passengers=0;
+			for (int i = 0; i < ships_positions.size(); i++) {
+				Ship ship = (Ship)(grid[ships_positions.get(i)[0]][ships_positions.get(i)[1]]);
+				passengers+= ship.getNoOfPassengers();
+			}
+			return passengers;
 		}
 
 	public String getOperator() {
