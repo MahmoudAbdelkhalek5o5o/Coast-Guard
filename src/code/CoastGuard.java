@@ -542,8 +542,8 @@ public class CoastGuard extends SearchProblem{
     		else {
     			ArrayList<StateNode> nextNodes = getNextStates(peek);
     			for (int i = 0; i < nextNodes.size(); i++) {
-    				if(nextNodes.get(i).getOperator().equals("retrieve")  && !nextNodes.get(i).shipsWrecked(ships_positions))
-    					continue;
+//    				if(nextNodes.get(i).getOperator().equals("retrieve")  && !nextNodes.get(i).shipsWrecked(ships_positions))
+//    					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
     					expandedNodes++;
@@ -574,8 +574,8 @@ public class CoastGuard extends SearchProblem{
     		else {
     			ArrayList<StateNode> nextNodes = getNextStates(peek);
     			for (int i = 0; i < nextNodes.size(); i++) {
-    				if(nextNodes.get(i).getOperator().equals("retrieve")  && !nextNodes.get(i).shipsWrecked(ships_positions))
-    					continue;
+//    				if(nextNodes.get(i).getOperator().equals("retrieve")  && !nextNodes.get(i).shipsWrecked(ships_positions))
+//    					continue;
     				if(!insertInsideVisitedIfNotThere(nextNodes.get(i).getAgent().getAgentInfoString(), nextNodes.get(i))) {
     					priorityQueue.add(nextNodes.get(i));
     					expandedNodes++;
@@ -738,7 +738,7 @@ public class CoastGuard extends SearchProblem{
 		long startTime = System.nanoTime();
 		
 		// SOLVE GET HERE
-    	String res = solve(grid_str,"AS1",true);
+    	String res = solve(grid_str,"AS2",true);
     	System.out.println(res);
 		
 		long elapsedTime = System.nanoTime() - startTime;
